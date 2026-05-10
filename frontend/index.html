@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskBoard</title>
+  <link rel="stylesheet" href="app.css" />
+  <!-- Tabler icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css" />
+</head>
+<body>
+
+  <!-- ── Login ───────────────────────────────────────────────────── -->
+  <div id="login-view" class="login-screen">
+    <div class="login-card">
+      <div class="login-logo">
+        <i class="ti ti-book-2"></i> TaskBoard
+      </div>
+      <p class="login-sub">Organiza tu vida académica, a tu manera.</p>
+      <div id="login-error" class="form-error hidden"></div>
+
+      <div id="register-name-field" class="field hidden">
+        <label>Nombre</label>
+        <input type="text" id="reg-name" placeholder="Tu nombre" />
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="auth-email" placeholder="tú@ejemplo.com" />
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="auth-password" placeholder="••••••••" />
+      </div>
+
+      <button class="login-btn" id="auth-submit-btn" onclick="submitAuth()">Iniciar sesión</button>
+      <p class="login-toggle">
+        <span id="auth-toggle-text">¿No tienes cuenta?</span>
+        <span class="link" onclick="toggleAuthMode()"> <span id="auth-toggle-link">Regístrate</span></span>
+      </p>
+    </div>
+  </div>
+
+  <!-- ── Main App ─────────────────────────────────────────────────── -->
+  <div id="app-view" class="app hidden">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <i class="ti ti-book-2"></i> TaskBoard
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-label">Vistas</div>
+        <div class="nav-item active" id="nav-tasks" onclick="switchView('tasks')">
+          <i class="ti ti-layout-list"></i> Mis tareas
+        </div>
+        <div class="nav-item" id="nav-calendar" onclick="switchView('calendar')">
+          <i class="ti ti-calendar"></i> Calendario
+        </div>
+      </nav>
+
+      <nav class="nav-section" style="margin-top:8px;">
+        <div class="nav-label">Cursos</div>
+        <div class="nav-item" id="filter-all" onclick="filterCourse('all')">
+          <i class="ti ti-stack-2"></i> Todos
+        </div>
+        <div id="course-nav-list"></div>
+        <div class="nav-item add-course-btn" onclick="openCourseModal()">
+          <i class="ti ti-plus"></i> Nuevo curso
+        </div>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="user-row" onclick="logout()">
+          <div class="avatar" id="user-avatar">--</div>
+          <span class="user-name" id="user-name-label">Usuario</span>
+          <i class="ti ti-logout" style="margin-left:auto; font-size:14px; color:var(--text-tertiary);"></i>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main">
+      <div class="topbar">
+        <div class="view-tabs">
+          <div class="tab active" id="tab-pending" onclick="filterStatus('pending')">Pendientes</div>
+          <div class="tab" id="tab-done" onclick="filterStatus('done')">Completadas</div>
+          <div class="tab" id="tab-all-s" onclick="filterStatus('all')">Todas</div>
+        </div>
+        <button class="add-btn" onclick="openTaskModal()">
+          <i class="ti ti-plus"></i> Nueva tarea
+        </button>
+      </div>
+
+      <!-- Tasks view -->
+      <div class="content" id="tasks-view">
+        <div class="filter-row" id="priority-filters">
+          <div class="filter-chip active" onclick="filterPriority(this,'all')">Todas</div>
+          <div class="filter-chip" onclick="filterPriority(this,'High')">Alta</div>
+          <div class="filter-chip" onclick="filterPriority(this,'Medium')">Media</div>
+          <div class="filter-chip" onclick="filterPriority(this,'Low')">Baja</div>
+        </div>
+        <div id="task-list"></div>
+      </div>
+
+      <!-- Calendar view -->
+      <div class="content hidden" id="calendar-view-panel">
+        <div class="cal-nav">
+          <span class="cal-month-label" id="cal-month-label"></span>
+          <div style="display:flex;gap:4px;">
+            <button class="cal-btn" onclick="changeMonth(-1)"><i class="ti ti-chevron-left"></i></button>
+            <button class="cal-btn" onclick="changeMonth(1)"><i class="ti ti-chevron-right"></i></button>
+          </div>
+        </div>
+        <div class="cal-header">
+          <div>Dom</div><div>Lun</div><div>Mar</div>
+          <div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div>
+        </div>
+        <div class="calendar-grid" id="cal-grid"></div>
+        <div id="cal-task-list" style="margin-top:16px;"></div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- ── Task Modal ─────────────────────────────────────────────── -->
+  <div class="modal-overlay hidden" id="task-modal-overlay">
+    <div class="modal">
+      <div class="modal-title" id="task-modal-title">Nueva tarea</div>
+
+      <div class="field"><label>Título</label>
+        <input type="text" id="f-title" placeholder="Ej: Estudiar para el parcial" />
+      </div>
+      <div class="field"><label>Descripción (opcional)</label>
+        <textarea id="f-desc" placeholder="Notas o detalles…"></textarea>
+      </div>
+      <div class="field"><label>Curso</label>
+        <select id="f-course"></select>
+      </div>
+      <div class="field"><label>Fecha de entrega</label>
+        <input type="date" id="f-due" />
+      </div>
+      <div class="field"><label>Prioridad</label>
+        <select id="f-priority">
+          <option value="High">Alta</option>
+          <option value="Medium" selected>Media</option>
+          <option value="Low">Baja</option>
+        </select>
+      </div>
+      <div class="field"><label>Recordatorio (opcional)</label>
+        <input type="datetime-local" id="f-reminder" />
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeTaskModal()">Cancelar</button>
+        <button class="btn-save" onclick="saveTask()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Course Modal ───────────────────────────────────────────── -->
+  <div class="modal-overlay hidden" id="course-modal-overlay">
+    <div class="modal" style="max-width:320px;">
+      <div class="modal-title">Nuevo curso</div>
+      <div class="field"><label>Nombre del curso</label>
+        <input type="text" id="c-name" placeholder="Ej: Ingeniería de Software" />
+      </div>
+      <div class="field"><label>Color</label>
+        <input type="color" id="c-color" value="#1D9E75" style="height:36px;padding:2px 6px;" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeCourseModal()">Cancelar</button>
+        <button class="btn-save" onclick="saveCourse()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
